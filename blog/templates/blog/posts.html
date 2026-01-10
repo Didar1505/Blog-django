@@ -1,0 +1,220 @@
+{% extends "blog/base.html" %}
+
+{% block extra_css %}
+<style>
+    .category-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none !important;
+        display: block;
+        margin-bottom: 0.75rem;
+    }
+
+    .category-card:hover {
+        border-color: var(--primary-accent);
+        background-color: #f8faff;
+        transform: translateX(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-title {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .category-description {
+        color: #64748b;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        /* Limits description to 2 lines */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Colored dot indicator using your cat.color */
+    .color-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    .pagination .page-link {
+        color: #64748b;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 40px;
+    }
+
+    .pagination .page-link:hover {
+        background-color: var(--primary-accent);
+        color: white !important;
+        transform: translateY(-2px);
+    }
+
+    .pagination .active .page-link {
+        background-color: var(--primary-accent) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+    }
+
+    /* Remove the default focus ring */
+    .page-link:focus {
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <header class="mb-5 text-center">
+        {% if category %}
+        <h1 class="display-4 mb-3">Exploring <span class="text-primary">{{ category.name }}</span></h1>
+        <p class="text-muted mx-auto" style="max-width: 600px;">{{ category.description }}</p>
+        {% else %}
+        <h1 class="display-4">The Feed</h1>
+        <p class="text-muted">Thoughts, stories, and ideas.</p>
+        {% endif %}
+    </header>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            {% for post in blogs %}
+            <div class="card blog-card mb-5 shadow-sm">
+                <div class="position-relative overflow-hidden">
+                    {% if post.featured_image %}
+                    <img src="{{ post.featured_image.url }}" class="card-img-top" alt="{{ post.title }}"
+                        style="height: 350px; object-fit: cover;">
+                    {% endif %}
+                    <div class="position-absolute top-0 start-0 m-3">
+                        {% for cat in post.categories.all %}
+                        <span class="badge rounded-pill text-bg-{{cat.color}}">{{ cat.name }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <h2 class="card-title h1 mb-3">
+                        <a href="{% url 'post_detail' post.slug %}" class="text-decoration-none text-dark">
+                            {{post.title}}
+                        </a>
+                    </h2>
+
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="ms-0">
+                            <p class="mb-0 small fw-bold text-dark">{{ post.author.username }}</p>
+                            <p class="mb-0 small text-muted">{{ post.published_at|date:"M d, Y" }} • 5 min read</p>
+                        </div>
+                    </div>
+
+                    <p class="card-text text-secondary mb-4">{{ post.body|striptags|truncatewords:25 }}</p>
+
+                    <a href="{% url 'post_detail' post.slug %}"
+                        class="btn btn-link p-0 text-primary fw-bold text-decoration-none">
+                        Read Article <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="my-5">
+                <ul class="pagination justify-content-center border-0">
+
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link border-0 shadow-sm rounded-pill me-2 px-3 text-primary"
+                            href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                            aria-label="Previous">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link border-0 shadow-sm rounded-pill mx-1 bg-primary text-white">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+                        <a class="page-link border-0 shadow-sm rounded-pill mx-1 px-3 text-dark bg-white"
+                            href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link border-0 shadow-sm rounded-pill ms-2 px-3 text-primary"
+                                href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+                                aria-label="Next">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="sidebar-widget p-4 sticky-top" style="top: 2rem;">
+                <h5 class="fw-bold mb-3">Search Stories</h5>
+                <form action="{% url 'search_results' %}" method="get" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control border-0 shadow-none bg-white"
+                            placeholder="Type something..." style="border-radius: 8px 0 0 8px;">
+                        <button class="btn btn-primary" type="submit"
+                            style="border-radius: 0 8px 8px 0;">Search</button>
+                    </div>
+                </form>
+
+                <h5 class="fw-bold mb-4 d-flex align-items-center">
+                    <i class="bi bi-grid-1x2 me-2 text-primary"></i> Browse Topics
+                </h5>
+
+                <div class="category-sidebar-list">
+                    {% for cat in categories %}
+                    <a href="{% url 'category_posts' cat.slug %}" class="category-card shadow-sm">
+                        <div class="category-title">
+                            <span>
+                                <span class="color-dot bg-{{ cat.color|default:'primary' }}"></span>
+                                {{ cat.name }}
+                            </span>
+                            <span class="badge rounded-pill bg-light text-muted border fw-normal"
+                                style="font-size: 0.7rem;">
+                                {{ cat.post_set.count }}
+                            </span>
+                        </div>
+
+                        {% if cat.description %}
+                        <p class="category-description mb-0">
+                            {{ cat.description }}
+                        </p>
+                        {% endif %}
+                    </a>
+                    {% empty %}
+                    <p class="text-muted small">No categories available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

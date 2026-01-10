@@ -1,0 +1,185 @@
+{% extends 'blog/base.html' %}
+{% block title %}{{ post.title }} - Journal{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <article>
+        <header class="article-header text-center">
+            <div class="mb-3">
+                {% for cat in post.categories.all %}
+                <span class="badge bg-light text-primary border px-3 py-2 rounded-pill">{{ cat.name }}</span>
+                {% endfor %}
+            </div>
+            <h1 class="display-3 fw-extrabold mb-4">{{ post.title }}</h1>
+
+            <div class="d-flex align-items-center justify-content-center gap-3">
+                <div class="text-start">
+                    <p class="mb-0 fw-bold">{{ post.author.username }}</p>
+                    <p class="text-muted small mb-0">{{ post.published_at|date:"F d, Y" }} • 10 min read</p>
+                </div>
+                {% if user.is_authenticated and post.author == user %}
+                <a href="{% url 'post_detail_update' post.slug %}" class="btn btn-outline-secondary btn-sm ms-3">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if post.featured_image %}
+        <div class="container-fluid px-0 mb-5">
+            <img src="{{ post.featured_image.url }}" class="img-fluid rounded-4 shadow-lg w-100"
+                style="max-height: 500px; object-fit: cover;" alt="Featured Image">
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="post-content">
+                    {{ post.body|safe }}
+                </div>
+
+                <hr class="my-5">
+
+                <section id="comments" class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold mb-0">Discussion (<span id="comment-count">{{ post.comments.count }}</span>)
+                        </h3>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                    <div class="comment-form-container bg-light p-4 rounded-4 mb-5 border">
+                        <div id="reply-info"
+                            class="mb-2 d-none justify-content-between align-items-center bg-white p-2 rounded-3 border">
+                            <span class="small text-muted">Replying to <strong id="replying-to-user"></strong></span>
+                            <button type="button" class="btn-close small" onclick="cancelReply()"
+                                style="font-size: 0.7rem;"></button>
+                        </div>
+
+                        <form id="comment-form" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="parent_id" id="parent_id_input" value="">
+
+                            <div class="mb-3">
+                                {{ comment_form.body }}
+                            </div>
+                            <button type="submit" class="btn btn-primary px-4 rounded-pill fw-bold" id="submit-btn">
+                                Post Comment
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light border text-center p-4 mb-5">
+                        <p class="mb-0">Join the conversation. <a href="{% url 'login' %}" class="fw-bold">Log in</a> to
+                            comment.</p>
+                    </div>
+                    {% endif %}
+
+                    <div id="comment-list" class="d-flex flex-column gap-4">
+                        {% for comment in comments %}
+                        <div class="comment-item-wrapper"">
+                            {% include 'blog/partials/_comment.html' with comment=comment %}
+
+                            {% if comment.replies.all %}
+                            <div class="reply-thread mt-3">
+                                {% for reply in comment.replies.all %}
+                                {% include 'blog/partials/_comment.html' with comment=reply %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center" id="no-comments">No comments yet. Start the conversation!</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </div>
+    </article>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to handle the UI when "Reply" is clicked
+    function handleReply(commentId, username) {
+        const parentInput = document.getElementById('parent_id_input');
+        const replyInfo = document.getElementById('reply-info');
+        const replyingToText = document.getElementById('replying-to-user');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Set the hidden input value
+        parentInput.value = commentId;
+
+        // Show reply info
+        replyingToText.innerText = username;
+        replyInfo.classList.remove('d-none');
+        replyInfo.classList.add('d-flex');
+
+        // Change button text
+        submitBtn.innerText = "Post Reply";
+
+        // Scroll smoothly to the form
+        document.getElementById('comment-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Function to cancel a reply and go back to a normal comment
+    function cancelReply() {
+        const parentInput = document.getElementById('parent_id_input');
+        const replyInfo = document.getElementById('reply-info');
+        const submitBtn = document.getElementById('submit-btn');
+
+        parentInput.value = "";
+        replyInfo.classList.add('d-none');
+        replyInfo.classList.remove('d-flex');
+        submitBtn.innerText = "Post Comment";
+    }
+
+    // Updated AJAX Logic
+    document.getElementById('comment-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const parentId = formData.get('parent_id');
+        const commentList = document.getElementById('comment-list');
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (parentId) {
+                        // It's a reply: find the parent container and append/prepend to its reply thread
+                        const parentCommentDiv = document.getElementById(`comment-${parentId}`).closest('.comment-item-wrapper');
+                        let replyThread = parentCommentDiv.querySelector('.reply-thread');
+
+                        // If no reply thread exists yet, create one
+                        if (!replyThread) {
+                            replyThread = document.createElement('div');
+                            replyThread.className = 'reply-thread mt-3';
+                            parentCommentDiv.appendChild(replyThread);
+                        }
+                        replyThread.insertAdjacentHTML('beforeend', data.comment_html);
+                    } else {
+                        // It's a main comment: prepend to top of list
+                        commentList.insertAdjacentHTML('afterbegin', `<div class="comment-item-wrapper">${data.comment_html}</div>`);
+                    }
+
+                    this.reset();
+                    cancelReply(); // Reset UI state
+
+                    // Update count
+                    const countEl = document.getElementById('comment-count');
+                    countEl.innerText = parseInt(countEl.innerText) + 1;
+                } else {
+                    alert('Error: ' + JSON.stringify(data.errors));
+                }
+            });
+    });
+</script>
+
+{% endblock %}

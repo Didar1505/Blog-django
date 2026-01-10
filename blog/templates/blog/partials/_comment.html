@@ -1,0 +1,29 @@
+<div class="comment-item mb-3 shadow-sm" id="comment-{{ comment.id }}">
+    <div class="d-flex align-items-start gap-3">
+        <div class="flex-shrink-0">
+            {% if comment.author.profile.get_avatar_url %}
+                <img src="{{ comment.author.profile.get_avatar_url }}" class="rounded-circle shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">
+            {% else %}
+                <div class="comment-avatar" style="width: 40px; height: 40px; background: #6366f1; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                    {{ comment.author.username|first|upper }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="w-100">
+            <div class="comment-meta d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-bold">{{ comment.author.username }}</span>
+                    <small class="text-muted ms-2">{{ comment.created_at|timesince }} ago</small>
+                </div>
+                <button class="btn btn-link btn-sm text-primary text-decoration-none fw-bold p-0 shadow-none btn-reply-toggle" 
+                        onclick="handleReply('{{ comment.id }}', '{{ comment.author.username }}')">
+                    Reply
+                </button>
+            </div>
+            <div class="comment-body mt-1">
+                {{ comment.body }}
+            </div>
+        </div>
+    </div>
+</div>

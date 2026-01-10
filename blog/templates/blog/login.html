@@ -1,0 +1,67 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Sign In - Journal{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<div class="login-wrapper container">
+    <div class="login-card p-4 p-md-5 mt-5">
+
+        <header class="login-header">
+            <a href="/" class="brand-logo">Welcome back<span class="text-primary">.</span></a>
+            <p class="text-muted small">Enter your credentials to access your account</p>
+        </header>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-danger border-0 small rounded-3 mb-4">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="username" class="form-label small fw-bold text-muted text-uppercase">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;">
+                        <i class="bi bi-person text-muted"></i>
+                    </span>
+                    <input type="text" id="username" name="username" class="form-control border-start-0"
+                        placeholder="Username" style="border-radius: 0 12px 12px 0;" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between">
+                    <label for="password" class="form-label small fw-bold text-muted text-uppercase">Password</label>
+                </div>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0" style="border-radius: 12px 0 0 12px;">
+                        <i class="bi bi-lock text-muted"></i>
+                    </span>
+                    <input type="password" id="password" name="password" class="form-control border-start-0"
+                        placeholder="••••••••" style="border-radius: 0 12px 12px 0;" required>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-4">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold">
+                    Sign In
+                </button>
+            </div>
+
+            <div class="text-center">
+                <p class="small text-muted mb-0">Don't have an account?
+                    <a href="{% url 'register' %}" class="fw-bold text-primary text-decoration-none">Create one</a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends 'blog/base.html' %}
+
+{% block extra_css %}
+{{ form.media }}
+<style>
+    /* Focus Mode Background */
+    body {
+        background-color: #f1f5f9;
+    }
+
+    .editor-container {
+        background: #fff;
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    /* CKEditor Customization */
+    .ck-editor__editable_inline {
+        min-height: 500px;
+        padding: 2rem !important;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        border: none !important;
+    }
+
+    .ck.ck-editor__main>.ck-editor__editable:not(.ck-focused) {
+        border-color: transparent;
+    }
+
+    .ck.ck-toolbar {
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        background: #f8fafc !important;
+        padding: 0.5rem !important;
+    }
+
+    /* Featured Image Preview */
+    #image-drop-area {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+        cursor: pointer;
+    }
+
+    #image-drop-area:hover {
+        border-color: var(--primary-accent);
+        background: #eff6ff;
+    }
+
+    #featuredImagePreview {
+        max-height: 300px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block title %}Create New Story{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 px-lg-5">
+    <form method="post" enctype="multipart/form-data" id="postForm">
+        {% csrf_token %}
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="editor-container p-4">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-uppercase text-muted">Post Title</label>
+                        <input type="text" name="title" value="{{ form.title.value|default:'' }}" 
+                            class="form-control form-control-lg border-0 fs-1 fw-bold ps-0"
+                            placeholder="Enter catchy title..." style="box-shadow: none;">
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.body }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="sticky-top" style="top: 100px;">
+                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4">Publish Details</h5>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Featured Image</label>
+                                <div id="image-drop-area"
+                                    onclick="document.getElementById('id_featured_image').click();">
+                                    <i class="bi bi-image fs-1 text-muted"></i>
+                                    <p class="small text-muted mb-0">Click to upload header image</p>
+                                    <img id="featuredImagePreview" src="#" alt="Preview" class="mt-2">
+                                </div>
+                                <div class="d-none">
+                                    {{ form.featured_image }}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Category</label>
+                                {{ form.categories }}
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase">Status</label>
+                                {{ form.status }}
+                            </div>
+                            <hr>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold">
+                                    Publish Story
+                                </button>
+                                <!-- <a href="{% url 'list-posts' %}" class="btn btn-link text-muted text-decoration-none">
+                                    Save as Draft
+                                </a> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Image Preview for Featured Image
+    const imageInput = document.querySelector('input[name="featured_image"]');
+    const preview = document.getElementById('featuredImagePreview');
+    const icon = document.querySelector('#image-drop-area i');
+    const text = document.querySelector('#image-drop-area p');
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    icon.style.display = 'none';
+                    text.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Modern styling for Django Form Fields
+    document.querySelectorAll('select, input').forEach(el => {
+        if (!el.classList.contains('fs-1')) {
+            el.classList.add('form-control');
+        }
+    });
+</script>
+{% endblock %}
