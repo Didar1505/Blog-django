@@ -14,8 +14,8 @@ from django.utils.text import slugify
 
 from . import models, forms
 
-def index(request):
-    return HttpResponse("Hello world")
+def custom_404(request, exception):
+    return render(request, 'blog/404.html', status=404)
 
 class PostListView(ListView):
     model = models.Post
