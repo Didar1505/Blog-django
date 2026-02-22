@@ -1,0 +1,99 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Page Not Found - Journal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-wrapper {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .error-code {
+        font-size: 10rem;
+        font-weight: 900;
+        line-height: 1;
+        background: linear-gradient(135deg, var(--primary-accent), #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        opacity: 0.2;
+        position: absolute;
+        z-index: -1;
+    }
+
+    .error-card {
+        max-width: 500px;
+        padding: 2rem;
+    }
+
+    .ghost-icon {
+        font-size: 4rem;
+        color: var(--primary-accent);
+        animation: float 3s ease-in-out infinite;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-20px);
+        }
+
+        100% {
+            transform: translateY(0px);
+        }
+    }
+
+    .search-minimal {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.5rem;
+        display: flex;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-wrapper container">
+    <div class="error-code">404</div>
+
+    <div class="error-card">
+        <div class="ghost-icon">
+            <i class="bi bi-compass"></i>
+        </div>
+
+        <h1 class="fw-bold text-dark mb-3">You seem a bit lost</h1>
+        <p class="text-muted mb-5">
+            The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
+        </p>
+
+        <div class="mb-5">
+            <form action="{% url 'search_results' %}" method="get" class="search-minimal">
+                <input type="text" name="q" class="form-control border-0 shadow-none"
+                    placeholder="Try searching for something else...">
+                <button type="submit" class="btn btn-primary rounded-pill px-4">Search</button>
+            </form>
+        </div>
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/" class="btn btn-dark rounded-pill px-4 py-2">
+                <i class="bi bi-house-door me-2"></i>Back Home
+            </a>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                Go Back
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
