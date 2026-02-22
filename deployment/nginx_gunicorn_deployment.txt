@@ -1,0 +1,117 @@
+sudo apt update
+sudo apt install python3-pip python3-venv nginx curl -y
+git clone project_url
+cd project
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+pip install gunicorn
+
+
+______________________________________
+nano settings.py
+
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static'] 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+______________________________________
+python manage.py collectstatic
+python manage.py migrate
+python manage.py createsuperuser
+______________________________________
+
+sudo nano /etc/systemd/system/gunicorn.socket
+
+[Unit]
+Description=gunicorn socket
+[Socket]
+ListenStream=/run/gunicorn.sock
+[Install]
+WantedBy=sockets.target
+
+______________________________________
+
+sudo nano /etc/systemd/system/gunicorn.service
+
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/home/USER/PROJECT-FOLDER
+ExecStart=/home/USER/PROJECT-FOLDER/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          PROJECT.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+
+______________________________________
+
+sudo systemctl daemon-reload
+sudo systemctl start gunicorn.socket
+sudo systemctl enable gunicorn.socket
+______________________________________
+
+sudo nano /etc/nginx/sites-available/PROJECT_NAME
+
+server {
+    listen 80;
+    server_name domain.com www.domain.com;
+
+    location /static/ {
+        alias /home/USER/PROJECT_FOLDER/staticfiles/;
+    }
+
+    location /media/ {
+        alias /home/USER/PROJECT_FOLDER/media/;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+
+
+sudo ln -s /etc/nginx/sites-available/django_project /etc/nginx/sites-enabled
+sudo nginx -t
+sudo systemctl restart nginx
+______________________________________
+
+sudo chmod +x /home/jarvis
+sudo chown -R :www-data /home/jarvis/Blog-django/staticfiles
+sudo chown -R :www-data /home/jarvis/Blog-django/media
+
+or 
+
+sudo chown -R :www-data /home/jarvis/Blog-django
+sudo chmod -R 775 /home/jarvis/Blog-django/media
+______________________________________
+
+HTTPS / SSL
+
+sudo apt install certbot python3-certbot-nginx -y
+
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+
+VERIFY NGINX CHANGES
+
+cat /etc/nginx/sites-available/django_project
+______________________________________
+
+sudo nginx -t
+sudo systemctl restart nginx
+______________________________________

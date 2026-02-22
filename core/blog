@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    server_name your_domain_or_ip;
+
+    # 1. Static files configuration
+    # This matches STATIC_URL and points to STATIC_ROOT
+    location /static/ {
+        alias /home/user/Blog/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    # 2. Media files configuration
+    # This matches MEDIA_URL and points to MEDIA_ROOT
+    location /media/ {
+        alias /home/user/Blog/media/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    # 3. Proxying requests to the Django application (Gunicorn/uWSGI)
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+        
+        # Standard proxy headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
