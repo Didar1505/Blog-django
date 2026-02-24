@@ -1,0 +1,36 @@
+# Stop the services
+sudo systemctl stop gunicorn.socket gunicorn.service
+
+# Disable them so they don't start on reboot
+sudo systemctl disable gunicorn.socket gunicorn.service
+
+# Remove the systemd service files
+sudo rm /etc/systemd/system/gunicorn.service
+sudo rm /etc/systemd/system/gunicorn.socket
+
+# Reload systemd to apply the removal
+sudo systemctl daemon-reload
+sudo systemctl reset-failed
+
+
+# Remove the enabled link
+sudo rm /etc/nginx/sites-enabled/PROJECT_NAME
+
+# Remove the actual config file
+sudo rm /etc/nginx/sites-available/PROJECT_NAME
+
+# (Optional) If Certbot created a backup config, remove it too
+# sudo rm /etc/nginx/sites-available/PROJECT_NAME-le-ssl.conf
+
+# Restart Nginx to finalize changes
+sudo nginx -t && sudo systemctl restart nginx
+
+# Be very careful with rm -rf! Ensure the path is correct.
+sudo rm -rf /home/jarvis/Blog-Django
+
+
+
+# WARNING: Only do this if you don't plan on hosting anything else soon
+sudo apt purge nginx nginx-common certbot python3-certbot-nginx -y
+sudo apt autoremove -y
+sudo certbot delete --cert-name top.dprogger.ru
